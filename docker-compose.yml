@@ -1,0 +1,32 @@
+version: '3'
+
+services:
+  postgresdb:
+    container_name: postgresdb
+    image: postgres
+    restart: always
+    environment:
+      POSTGRES_PASSWORD: 123456
+      POSTGRES_DB: user-meetings
+    volumes:
+      - ./database:/var/lib/postgresql/data
+    ports: 
+      - 5432:5432
+    networks: 
+      - appnetwork
+  
+  graphqlserver:
+    build: .
+    container_name: graphqlserver
+    restart: always
+    ports:
+      - 8000:8000
+    volumes:
+      - .:/app
+    depends_on: 
+      - postgresdb
+    networks: 
+      - appnetwork
+networks: 
+  appnetwork:
+    driver: bridge

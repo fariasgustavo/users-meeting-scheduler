@@ -1,0 +1,11 @@
+{
+    "type": "postgres",
+    "host": "postgresdb",
+    "port": 5432,
+    "username": "postgres",
+    "password": "123456",
+    "database": "user-meetings",
+    "entities": ["./src/domain/models/*.ts"],
+    "synchronize": true,
+    "autoLoadEntities": true
+  }
