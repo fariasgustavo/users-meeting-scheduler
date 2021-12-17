@@ -1,16 +1,18 @@
 import "reflect-metadata";
-import express from "express";
-import { createConnection } from "typeorm";
+import { createConnection, useContainer } from "typeorm";
 import { ApolloServer } from "apollo-server";
 import { buildSchema } from "type-graphql";
-import { MeetingResolver } from "./domain/resolvers/meeting.resolver";
-import { UserResolver } from "./domain/resolvers/user.resolver";
-import { auth } from "express-oauth2-jwt-bearer";
+import { MeetingResolver } from "./domain/services/meeting.service";
+import { UserResolver } from "./domain/services/user.service";
+import { Container } from "typedi";
+import { Container as TypeOrmContainer } from "typeorm-typedi-extensions";
 
 async function main() {
+  useContainer(TypeOrmContainer);
   const connection = await createConnection();
   const schema = await buildSchema({
     resolvers: [MeetingResolver, UserResolver],
+    container: Container,
   });
   const server = new ApolloServer({
     schema,

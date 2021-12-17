@@ -8,23 +8,29 @@ import {
   Resolver,
   UseMiddleware,
 } from "type-graphql";
+import { InjectRepository } from "typeorm-typedi-extensions";
 import { Meeting } from "../models/meeting.model";
 import { AuthProtocol } from "../../infra/auth/auth.protocol";
 import { User } from "../models/user.model";
 import { PostMeetingArgs } from "../entities/PostMeetingArgs.entity";
-import { In } from "typeorm";
+import { Service } from "typedi";
+import { MeetingRepository } from "../repositories/meeting.repository";
+import { UserRepository } from "../repositories/user.repository";
 
+@Service()
 @Resolver()
 export class MeetingResolver {
+  constructor(
+    @InjectRepository(Meeting) private meetingRepository: MeetingRepository,
+    @InjectRepository(Meeting) private userRepository: UserRepository
+  ) {}
+
   @UseMiddleware(isAuth)
   @Query(() => [Meeting])
   async meetings(@Ctx() context: AuthProtocol): Promise<Meeting[]> {
-    const meetings = await Meeting.createQueryBuilder("meeting")
-      .leftJoinAndSelect("meeting.guests", "guests")
-      .leftJoinAndSelect("meeting.admin", "admin")
-      .where("admin.id = :userId", { userId: context.payload.userId })
-      .orWhere("guests.id = :userId", { userId: context.payload.userId })
-      .getMany();
+    const meetings = await this.meetingRepository.findByAdminOrGuests(
+      context.payload.userId
+    );
 
     if (meetings.length < 1)
       throw new Error("There's no meetings scheduled for this user");
@@ -58,7 +64,7 @@ export class MeetingResolver {
     const newMeetingStored = await Meeting.save(newMeeting);
     newMeetingStored.link = `meetme.org/meeting/${newMeetingStored.id}`;
 
-    return Meeting.save(newMeetingStored);
+    return this.meetingRepository.save(newMeetingStored);
   }
 
   @UseMiddleware(isAuth)
@@ -67,14 +73,16 @@ export class MeetingResolver {
     @Ctx() context: AuthProtocol,
     @Arg("meetingId") meetingId: number
   ): Promise<Meeting> {
-    const meetting = await Meeting.findOne(meetingId, { relations: ["admin"] });
+    const meetting = await this.meetingRepository.findOne(meetingId, {
+      relations: ["admin"],
+    });
 
     if (!meetting) throw new Error(`Metting ID not found: ${meetingId}`);
 
     if (meetting.admin.id !== context.payload.userId)
       throw new Error("User is not allowed to remove this Meeting");
 
-    return Meeting.remove(meetting);
+    return this.meetingRepository.remove(meetting);
   }
 
   @UseMiddleware(isAuth)
@@ -84,10 +92,10 @@ export class MeetingResolver {
     @Arg("invitedUserEmail") invitedUserEmail: string,
     @Arg("meetingId") meetingId: number
   ) {
-    const invitedUser = await User.findOne({
+    const invitedUser = await this.userRepository.findOne({
       where: { email: invitedUserEmail },
     });
-    const meetting = await Meeting.findOne(meetingId, {
+    const meetting = await this.meetingRepository.findOne(meetingId, {
       relations: ["guests", "admin"],
     });
 
@@ -96,7 +104,7 @@ export class MeetingResolver {
 
     meetting.guests.push(invitedUser);
 
-    return Meeting.save(meetting);
+    return this.meetingRepository.save(meetting);
   }
 
   @UseMiddleware(isAuth)
@@ -106,10 +114,10 @@ export class MeetingResolver {
     @Arg("invitedUserEmail") invitedUserEmail: string,
     @Arg("meetingId") meetingId: number
   ) {
-    const invitedUser = await User.findOne({
+    const invitedUser = await this.userRepository.findOne({
       where: { email: invitedUserEmail },
     });
-    const meetting = await Meeting.findOne(meetingId, {
+    const meetting = await this.meetingRepository.findOne(meetingId, {
       relations: ["guests", "admin"],
     });
 
@@ -122,6 +130,6 @@ export class MeetingResolver {
 
     meetting.guests = allowedGuests;
 
-    return Meeting.save(meetting);
+    return this.meetingRepository.save(meetting);
   }
 }

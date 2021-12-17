@@ -36,6 +36,8 @@
     "pg": "^8.7.1",
     "reflect-metadata": "^0.1.13",
     "type-graphql": "^1.1.1",
-    "typeorm": "^0.2.41"
+    "typedi": "^0.10.0",
+    "typeorm": "^0.2.41",
+    "typeorm-typedi-extensions": "^0.4.1"
   }
 }
