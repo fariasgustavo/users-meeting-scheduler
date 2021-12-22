@@ -18,6 +18,7 @@ async function main() {
     schema,
     context: ({ req, res }) => ({ req, res }),
   });
+
   server.listen({ port: 8000 }, () =>
     console.log(`GraphQL server has started on port ${8000}`)
   );

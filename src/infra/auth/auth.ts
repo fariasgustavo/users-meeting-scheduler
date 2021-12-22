@@ -1,6 +1,8 @@
 import { MiddlewareFn } from "type-graphql";
 import { verify } from "jsonwebtoken";
 import { AuthProtocol } from "./auth.protocol";
+import * as dotenv from "dotenv";
+dotenv.config({ path: "./.env" });
 
 export const isAuth: MiddlewareFn<AuthProtocol> = ({ context }, next) => {
   const { authorization } = context.req.headers;
@@ -9,7 +11,7 @@ export const isAuth: MiddlewareFn<AuthProtocol> = ({ context }, next) => {
 
   try {
     const token = authorization.split(" ")[1];
-    const payload = verify(token, "ADBiibecqI1UArgFQgZYvYX4LTZEL4fw", {
+    const payload = verify(token, process.env.AUTH_SECRET, {
       algorithms: ["HS256"],
     });
 
