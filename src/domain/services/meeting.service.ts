@@ -32,9 +32,6 @@ export class MeetingResolver {
       context.payload.userId
     );
 
-    if (meetings.length < 1)
-      throw new Error("There's no meetings scheduled for this user");
-
     return meetings;
   }
 
@@ -61,10 +58,12 @@ export class MeetingResolver {
       guests,
     });
 
-    const newMeetingStored = await Meeting.save(newMeeting);
-    newMeetingStored.link = `meetme.org/meeting/${newMeetingStored.id}`;
+    const newMeetingStored = await this.meetingRepository.save(newMeeting);
 
-    return this.meetingRepository.save(newMeetingStored);
+    return this.meetingRepository.save({
+      ...newMeetingStored,
+      link: `meetme.org/meeting/${newMeetingStored.id}`,
+    });
   }
 
   @UseMiddleware(isAuth)

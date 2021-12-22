@@ -28,6 +28,6 @@ export class UserResolver {
       nickname,
     });
 
-    return this.userRepository.store(newUser);
+    return this.userRepository.save(newUser);
   }
 }
